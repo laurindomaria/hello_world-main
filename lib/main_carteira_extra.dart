@@ -119,11 +119,7 @@ class CartaoBanco extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Image.asset(
-                logo,
-                width: 40,
-                height: 40,
-              ),
+              Image.asset(logo, width: 40, height: 40),
 
               SizedBox(width: 10),
 
@@ -142,13 +138,7 @@ class CartaoBanco extends StatelessWidget {
 
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Image.asset(
-                    bandeira,
-                    width: 40,
-                    height: 40,
-                  )
-                ],
+                children: [Image.asset(bandeira, width: 40, height: 40)],
               ),
             ],
           ),
@@ -181,9 +171,6 @@ class CartaoBanco extends StatelessWidget {
                   ),
                 ],
               ),
-
-              
-
 
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
