@@ -41,6 +41,7 @@ dependencies:
   flutter_blue_plus: ^2.3.12
   http: ^1.6.0
   image_picker: ^1.2.3
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:

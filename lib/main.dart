@@ -1,190 +1,202 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const AppConsultas());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AppConsultas extends StatelessWidget {
+  const AppConsultas({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Registro de Produto',
+      title: 'Agendamento de Consultas',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const ProdutoPage(),
+      home: const TelaPrincipal(),
     );
   }
 }
 
-class ProdutoPage extends StatefulWidget {
-  const ProdutoPage({super.key});
+class Consulta {
+  String paciente;
+  String medico;
+  String especialidade;
+  String data;
+  String horario;
+
+  Consulta({
+    required this.paciente,
+    required this.medico,
+    required this.especialidade,
+    required this.data,
+    required this.horario,
+  });
+}
+
+class TelaPrincipal extends StatefulWidget {
+  const TelaPrincipal({super.key});
 
   @override
-  State<ProdutoPage> createState() => _ProdutoPageState();
+  State<TelaPrincipal> createState() => _TelaPrincipalState();
 }
 
-class _ProdutoPageState extends State<ProdutoPage> {
-  final TextEditingController nomeController = TextEditingController();
+class _TelaPrincipalState extends State<TelaPrincipal> {
+  List<Consulta> consultas = [];
 
-  File? foto;
+  final AudioPlayer player = AudioPlayer();
 
-  // Função para abrir a câmera e tirar a foto
-  Future<void> tirarFoto() async {
-    final ImagePicker picker = ImagePicker();
+  void adicionarConsulta() {
+    TextEditingController paciente = TextEditingController();
+    TextEditingController medico = TextEditingController();
+    TextEditingController especialidade = TextEditingController();
+    TextEditingController data = TextEditingController();
+    TextEditingController horario = TextEditingController();
 
-    final XFile? imagem = await picker.pickImage(
-      source: ImageSource.camera,
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            "Nova Consulta",
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: paciente,
+                  decoration: const InputDecoration(
+                    labelText: "Nome do paciente",
+                  ),
+                ),
+                TextField(
+                  controller: medico,
+                  decoration: const InputDecoration(
+                    labelText: "Nome do médico",
+                  ),
+                ),
+                TextField(
+                  controller: especialidade,
+                  decoration: const InputDecoration(
+                    labelText: "Especialidade",
+                  ),
+                ),
+                TextField(
+                  controller: data,
+                  decoration: const InputDecoration(
+                    labelText: "Data da consulta",
+                  ),
+                ),
+                TextField(
+                  controller: horario,
+                  decoration: const InputDecoration(
+                    labelText: "Horário",
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Cancelar"),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            ElevatedButton(
+              child: const Text("Salvar"),
+              onPressed: () async {
+
+                await player.play(
+                  AssetSource('audio/som.mp3'),
+                );
+
+                setState(() {
+                  consultas.add(
+                    Consulta(
+                      paciente: paciente.text,
+                      medico: medico.text,
+                      especialidade: especialidade.text,
+                      data: data.text,
+                      horario: horario.text,
+                    ),
+                  );
+                });
+
+                Navigator.pop(context);
+              },
+            )
+          ],
+        );
+      },
     );
-
-    if (imagem != null) {
-      setState(() {
-        foto = File(imagem.path);
-      });
-    }
   }
 
-  // Função para cadastrar o produto
-  void cadastrarProduto() {
-    if (nomeController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Digite o nome do produto.'),
-        ),
-      );
-      return;
-    }
-
-    if (foto == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tire uma foto do produto.'),
-        ),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Produto cadastrado com sucesso!'),
-      ),
-    );
+  void removerConsulta(int index) {
+    setState(() {
+      consultas.removeAt(index);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registro de Produto'),
+        title: const Text(
+          "Agendamento de Consultas",
+        ),
         centerTitle: true,
       ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-
-            const Text(
-              'Cadastrar Produto',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            // Campo para o nome do produto
-            TextField(
-              controller: nomeController,
-              decoration: const InputDecoration(
-                labelText: 'Nome do produto',
-                hintText: 'Digite o nome do produto',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.inventory),
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            const Text(
-              'Foto do produto',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // Área onde a foto será exibida
-            Container(
-              width: double.infinity,
-              height: 300,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Colors.grey,
-                  width: 2,
+      body: consultas.isEmpty
+          ? const Center(
+              child: Text(
+                "Nenhuma consulta agendada",
+                style: TextStyle(
+                  fontSize: 18,
                 ),
-                borderRadius: BorderRadius.circular(10),
               ),
+            )
+          : ListView.builder(
+              itemCount: consultas.length,
+              itemBuilder: (context, index) {
+                final consulta = consultas[index];
 
-              child: foto == null
-                  ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.camera_alt,
-                            size: 70,
-                            color: Colors.grey,
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            'Nenhuma foto tirada',
-                            style: TextStyle(
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        foto!,
-                        fit: BoxFit.cover,
-                      ),
+                return Card(
+                  margin: const EdgeInsets.all(10),
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.medical_services,
+                      color: Colors.blue,
                     ),
+                    title: Text(
+                      consulta.paciente,
+                    ),
+                    subtitle: Text(
+                      "Médico: ${consulta.medico}\n"
+                      "Especialidade: ${consulta.especialidade}\n"
+                      "Data: ${consulta.data}\n"
+                      "Horário: ${consulta.horario}",
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(
+                        Icons.delete,
+                        color: Colors.red,
+                      ),
+                      onPressed: () {
+                        removerConsulta(index);
+                      },
+                    ),
+                  ),
+                );
+              },
             ),
-
-            const SizedBox(height: 20),
-
-            // Botão para abrir a câmera
-            ElevatedButton.icon(
-              onPressed: tirarFoto,
-              icon: const Icon(Icons.camera_alt),
-              label: const Text('TIRAR FOTO'),
-            ),
-
-            const SizedBox(height: 15),
-
-            // Botão para cadastrar
-            ElevatedButton.icon(
-              onPressed: cadastrarProduto,
-              icon: const Icon(Icons.check),
-              label: const Text('CADASTRAR PRODUTO'),
-            ),
-          ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: adicionarConsulta,
+        child: const Icon(
+          Icons.add,
         ),
       ),
     );
