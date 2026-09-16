@@ -1,6 +1,7 @@
-import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:sensors_plus/sensors_plus.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,127 +14,175 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const SensorPage(),
+      title: 'Registro de Produto',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const ProdutoPage(),
     );
   }
 }
 
-class SensorPage extends StatefulWidget {
-  const SensorPage({super.key});
+class ProdutoPage extends StatefulWidget {
+  const ProdutoPage({super.key});
 
   @override
-  State<SensorPage> createState() => _SensorPageState();
+  State<ProdutoPage> createState() => _ProdutoPageState();
 }
 
-class _SensorPageState extends State<SensorPage> {
-  double x = 0;
-  double y = 0;
-  double z = 0;
+class _ProdutoPageState extends State<ProdutoPage> {
+  final TextEditingController nomeController = TextEditingController();
 
-  // Valores anteriores do acelerômetro
-  double ultimoX = 0;
-  double ultimoY = 0;
-  double ultimoZ = 0;
+  File? foto;
 
-  // Indica se o celular está sendo movimentado
-  bool movimentando = false;
+  // Função para abrir a câmera e tirar a foto
+  Future<void> tirarFoto() async {
+    final ImagePicker picker = ImagePicker();
 
-  // Guarda a conexão com o sensor
-  StreamSubscription? acelerometro;
+    final XFile? imagem = await picker.pickImage(
+      source: ImageSource.camera,
+    );
 
-  @override
-  void initState() {
-    super.initState();
-
-    // Recebe os valores do acelerômetro
-    acelerometro = accelerometerEventStream().listen((event) {
-      // Calcula quanto os valores mudaram
-      double diferencaX = (event.x - ultimoX).abs();
-      double diferencaY = (event.y - ultimoY).abs();
-      double diferencaZ = (event.z - ultimoZ).abs();
-
-      // Define o limite para considerar que houve movimento
-      bool houveMovimento =
-          diferencaX > 1.5 ||
-          diferencaY > 1.5 ||
-          diferencaZ > 1.5;
-
+    if (imagem != null) {
       setState(() {
-        x = event.x;
-        y = event.y;
-        z = event.z;
-
-        movimentando = houveMovimento;
-
-        // Guarda os valores atuais para comparar na próxima leitura
-        ultimoX = event.x;
-        ultimoY = event.y;
-        ultimoZ = event.z;
+        foto = File(imagem.path);
       });
-    });
+    }
   }
 
-  @override
-  void dispose() {
-    acelerometro?.cancel();
-    super.dispose();
+  // Função para cadastrar o produto
+  void cadastrarProduto() {
+    if (nomeController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Digite o nome do produto.'),
+        ),
+      );
+      return;
+    }
+
+    if (foto == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tire uma foto do produto.'),
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Produto cadastrado com sucesso!'),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sensor do celular'),
+        title: const Text('Registro de Produto'),
+        centerTitle: true,
       ),
 
-      body: Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+
             const Text(
-              'Acelerômetro',
+              'Cadastrar Produto',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 26,
                 fontWeight: FontWeight.bold,
               ),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 25),
 
-            Text(
-              'X: ${x.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 24),
-            ),
-
-            Text(
-              'Y: ${y.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 24),
-            ),
-
-            Text(
-              'Z: ${z.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 24),
-            ),
-
-            const SizedBox(height: 40),
-
-            // Indica se o celular está parado ou em movimento
-            Text(
-              movimentando ? 'CELULAR EM MOVIMENTO' : 'CELULAR PARADO',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: movimentando ? Colors.red : Colors.green,
+            // Campo para o nome do produto
+            TextField(
+              controller: nomeController,
+              decoration: const InputDecoration(
+                labelText: 'Nome do produto',
+                hintText: 'Digite o nome do produto',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.inventory),
               ),
+            ),
+
+            const SizedBox(height: 25),
+
+            const Text(
+              'Foto do produto',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Área onde a foto será exibida
+            Container(
+              width: double.infinity,
+              height: 300,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.grey,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+
+              child: foto == null
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.camera_alt,
+                            size: 70,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'Nenhuma foto tirada',
+                            style: TextStyle(
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        foto!,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
             ),
 
             const SizedBox(height: 20),
 
-            // Altera a informação na tela quando há movimento
-            Icon(
-              movimentando ? Icons.vibration : Icons.phone_android,
-              size: 50,
-              color: movimentando ? Colors.red : Colors.green,
+            // Botão para abrir a câmera
+            ElevatedButton.icon(
+              onPressed: tirarFoto,
+              icon: const Icon(Icons.camera_alt),
+              label: const Text('TIRAR FOTO'),
+            ),
+
+            const SizedBox(height: 15),
+
+            // Botão para cadastrar
+            ElevatedButton.icon(
+              onPressed: cadastrarProduto,
+              icon: const Icon(Icons.check),
+              label: const Text('CADASTRAR PRODUTO'),
             ),
           ],
         ),
